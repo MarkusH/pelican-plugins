@@ -5,6 +5,7 @@ Share Post
 This plugin adds share URL to article. These links are textual which means no
 online tracking of your readers.
 """
+from __future__ import unicode_literals
 
 from bs4 import BeautifulSoup
 try:
