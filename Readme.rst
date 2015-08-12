@@ -36,6 +36,8 @@ Plugin descriptions
 ========================  ===========================================================
 Plugin                    Description
 ========================  ===========================================================
+Always modified           Copy created date metadata into modified date for easy "latest updates" indexes
+
 AsciiDoc reader           Use AsciiDoc to write your posts.
 
 Asset management          Use the Webassets module to manage assets such as CSS and JS files.
@@ -102,6 +104,8 @@ Libravatar                Allows inclusion of user profile pictures from librava
 
 Liquid-style tags         Allows liquid-style tags to be inserted into markdown within Pelican documents
 
+Load CSV                  Adds ``csv`` Jinja tag to display the contents of a CSV file as an HTML table
+
 Multi parts posts         Allows you to write multi-part posts
 
 Markdown Inline Extend    Enables you to add customize inline patterns to your markdown
@@ -115,6 +119,8 @@ Optimize images           Applies lossless compression on JPEG and PNG images
 PDF generator             Automatically exports RST articles and pages as PDF files
 
 Pelican-flickr            Brings your Flickr photos & sets into your static website
+
+pelican_javascript        Allows you to embed Javascript and CSS files into individual articles
 
 pelican-toc               Generates a Table of Contents and make it available to the theme via article.toc
 
@@ -152,11 +158,15 @@ Replacer                  Replace a text of a generated HTML
 
 Representative image      Extracts a representative image (i.e, featured image) from the article's summary or content
 
+RMD Reader                Create posts via knitr RMarkdown files
+
 Share post                Creates share URLs of article
 
 Simple footnotes          Adds footnotes to blog posts
 
 Sitemap                   Generates plain-text or XML sitemaps
+
+Slim                      Render theme template files via Plim, a Python port of Slim, instead of Jinja
 
 Static comments           Allows you to add static comments to an article
 

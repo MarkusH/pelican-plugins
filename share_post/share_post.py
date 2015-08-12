@@ -41,12 +41,17 @@ def share_post(content):
     facebook_link = 'http://www.facebook.com/sharer/sharer.php?s=100&amp;p%%5Burl%%5D=%s' % url
     gplus_link = 'https://plus.google.com/share?url=%s' % url
     twitter_link = 'http://twitter.com/home?status=%s' % tweet
+    linkedin_link = 'https://www.linkedin.com/shareArticle?mini=true&url=%s&title=%s&source=%s' % (
+        url, title, url
+    )
+
     mail_link = 'mailto:?subject=%s&amp;body=%s' % (title, url)
 
     share_links = {
         'twitter': twitter_link,
         'facebook': facebook_link,
         'google-plus': gplus_link,
+        'linkedin': linkedin_link,
         'email': mail_link
     }
     content.share_post = share_links
