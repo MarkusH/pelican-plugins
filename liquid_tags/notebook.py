@@ -6,7 +6,7 @@ notebook in a blog post.
 
 Syntax
 ------
-{% notebook filename.ipynb [ cells[start:end] ]%}
+{% notebook filename.ipynb [ cells[start:end] language[language] ]%}
 
 The file should be specified relative to the ``notebooks`` subdirectory of the
 content directory.  Optionally, this subdirectory can be specified in the
@@ -16,6 +16,9 @@ config file:
 
 The cells[start:end] statement is optional, and can be used to specify which
 block of cells from the notebook to include.
+
+The language statement is obvious and can be used to specify whether ipython2
+or ipython3 syntax highlighting should be used.
 
 Requirements
 ------------
@@ -44,36 +47,65 @@ this will insert the appropriate CSS.  All efforts have been made to ensure
 that this CSS will not override formats within the blog theme, but there may
 still be some conflicts.
 """
+import warnings
 import re
 import os
 from functools import partial
+from io import open
 
 from .mdx_liquid_tags import LiquidTags
 
 import IPython
 IPYTHON_VERSION = IPython.version_info[0]
 
+try:
+    import nbformat
+except:
+    pass
+
 if not IPYTHON_VERSION >= 1:
     raise ValueError("IPython version 1.0+ required for notebook tag")
 
+if IPYTHON_VERSION > 1:
+    warnings.warn("Pelican plugin is not designed to work with IPython "
+                  "versions greater than 1.x. CSS styles have changed in "
+                  "later releases.")
+
 try:
-    from IPython.nbconvert.filters.highlight import _pygments_highlight
+    from nbconvert.filters.highlight import _pygments_highlight
 except ImportError:
-    # IPython < 2.0
-    from IPython.nbconvert.filters.highlight import _pygment_highlight as _pygments_highlight
+    try:
+        from IPython.nbconvert.filters.highlight import _pygments_highlight
+    except ImportError:
+        # IPython < 2.0
+        from IPython.nbconvert.filters.highlight import _pygment_highlight as _pygments_highlight
 
 from pygments.formatters import HtmlFormatter
 
-from IPython.nbconvert.exporters import HTMLExporter
-from IPython.config import Config
+try:
+    from nbconvert.exporters import HTMLExporter
+except ImportError:
+        from IPython.nbconvert.exporters import HTMLExporter
 
 try:
-    from IPython.nbconvert.preprocessors import Preprocessor
+    from traitlets.config import Config
 except ImportError:
-    # IPython < 2.0
-    from IPython.nbconvert.transformers import Transformer as Preprocessor
+    from IPython.config import Config
 
-from IPython.utils.traitlets import Integer
+try:
+    from nbconvert.preprocessors import Preprocessor
+except ImportError:
+    try:
+        from IPython.nbconvert.preprocessors import Preprocessor
+    except ImportError:
+        # IPython < 2.0
+        from IPython.nbconvert.transformers import Transformer as Preprocessor
+
+try:
+    from traitlets import Integer
+except ImportError:
+    from IPython.utils.traitlets import Integer
+
 from copy import deepcopy
 
 #----------------------------------------------------------------------
@@ -135,26 +167,18 @@ div.collapseheader {
 }
 </style>
 
-<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
-<script type="text/javascript">
-init_mathjax = function() {
-    if (window.MathJax) {
-        // MathJax loaded
-        MathJax.Hub.Config({
-            tex2jax: {
-                inlineMath: [ ['$','$'], ["\\(","\\)"] ],
-                displayMath: [ ['$$','$$'], ["\\[","\\]"] ]
-            },
-            displayAlign: 'left', // Change this to 'center' to center equations.
-            "HTML-CSS": {
-                styles: {'.MathJax_Display': {"margin": 0}}
-            }
-        });
-        MathJax.Hub.Queue(["Typeset",MathJax.Hub]);
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+    tex2jax: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        processEscapes: true,
+        displayMath: [['$$','$$'], ["\\[","\\]"]]
     }
-}
-init_mathjax();
+});
 </script>
+<script type="text/javascript" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
 
 <script type="text/javascript">
@@ -209,7 +233,7 @@ class SubCell(Preprocessor):
                 worksheet.cells = cells[self.start:self.end]
         else:
             nbc.cells = nbc.cells[self.start:self.end]
-        
+
         return nbc, resources
 
     call = preprocess # IPython < 2.0
@@ -293,12 +317,15 @@ def notebook(preprocessor, tag, markup):
                             **subcell_kwarg)
 
     # read and parse the notebook
-    with open(nb_path) as f:
+    with open(nb_path, encoding='utf-8') as f:
         nb_text = f.read()
         if IPYTHON_VERSION < 3:
             nb_json = IPython.nbformat.current.reads_json(nb_text)
         else:
-            nb_json = IPython.nbformat.reads(nb_text, as_version=4)
+            try:
+                nb_json = nbformat.reads(nb_text, as_version=4)
+            except:
+                nb_json = IPython.nbformat.reads(nb_text, as_version=4)
 
     (body, resources) = exporter.from_notebook_node(nb_json)
 
@@ -317,7 +344,7 @@ def notebook(preprocessor, tag, markup):
 
     # this will stash special characters so that they won't be transformed
     # by subsequent processes.
-    body = preprocessor.configs.htmlStash.store(body, safe=True)
+    body = preprocessor.configs.htmlStash.store(body)
     return body
 
 notebook.header_saved = False
